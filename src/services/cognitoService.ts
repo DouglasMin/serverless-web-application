@@ -10,9 +10,9 @@ import type { User, LoginCredentials, AuthTokens } from '../types'
 
 // Cognito configuration - these should come from environment variables
 const COGNITO_CONFIG = {
-  UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || 'us-east-1_example123',
-  ClientId: import.meta.env.VITE_COGNITO_CLIENT_ID || '1234567890abcdef1234567890',
-  Region: import.meta.env.VITE_AWS_REGION || 'us-east-1'
+  UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
+  ClientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
+  Region: import.meta.env.VITE_AWS_REGION
 }
 
 // Initialize Cognito User Pool
