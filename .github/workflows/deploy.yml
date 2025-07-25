@@ -31,8 +31,8 @@ jobs:
       env:
         VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         VITE_AWS_REGION: ${{ secrets.VITE_AWS_REGION }}
-        VITE_USER_POOL_ID: ${{ secrets.VITE_USER_POOL_ID }}
-        VITE_USER_POOL_CLIENT_ID: ${{ secrets.VITE_USER_POOL_CLIENT_ID }}
+        VITE_COGNITO_USER_POOL_ID: ${{ secrets.VITE_COGNITO_USER_POOL_ID }}
+        VITE_COGNITO_CLIENT_ID: ${{ secrets.VITE_COGNITO_CLIENT_ID }}
         VITE_ENABLE_AUTH: true
 
     - name: Configure AWS credentials
