@@ -179,7 +179,7 @@ class CognitoService {
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     return new Promise((resolve, reject) => {
       const cognitoUser = userPool.getCurrentUser()
-      
+
       if (!cognitoUser) {
         reject(new Error('No current user found'))
         return
@@ -210,7 +210,7 @@ class CognitoService {
   async getCurrentSession(): Promise<CognitoUserSession | null> {
     return new Promise((resolve) => {
       const cognitoUser = userPool.getCurrentUser()
-      
+
       if (!cognitoUser) {
         resolve(null)
         return
@@ -230,7 +230,7 @@ class CognitoService {
   async getCurrentUser(): Promise<User | null> {
     return new Promise((resolve, reject) => {
       const cognitoUser = userPool.getCurrentUser()
-      
+
       if (!cognitoUser) {
         resolve(null)
         return
@@ -310,7 +310,7 @@ class CognitoService {
   async changePassword(oldPassword: string, newPassword: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const cognitoUser = userPool.getCurrentUser()
-      
+
       if (!cognitoUser) {
         reject(new Error('No current user found'))
         return
