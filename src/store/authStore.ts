@@ -219,7 +219,8 @@ export const useAuthStore = create<AuthState>()(
                 expiresAt: session.getAccessToken().getExpiration() * 1000
               }
               
-              // Set auth token in API client
+              // Set auth token in API client FIRST
+              console.log('🔑 Setting auth token from Cognito session')
               apiClient.setAuthToken(tokens.accessToken)
               
               set({
@@ -230,14 +231,35 @@ export const useAuthStore = create<AuthState>()(
                 error: null
               })
             } else {
-              set({ isLoading: false })
+              // Clear any existing token if user not found
+              apiClient.setAuthToken(null)
+              set({ 
+                user: null,
+                tokens: null,
+                isAuthenticated: false,
+                isLoading: false 
+              })
             }
           } else {
-            set({ isLoading: false })
+            // Clear any existing token if session invalid
+            apiClient.setAuthToken(null)
+            set({ 
+              user: null,
+              tokens: null,
+              isAuthenticated: false,
+              isLoading: false 
+            })
           }
         } catch (error: any) {
           console.warn('Auth initialization failed:', error)
-          set({ isLoading: false })
+          // Clear token on error
+          apiClient.setAuthToken(null)
+          set({ 
+            user: null,
+            tokens: null,
+            isAuthenticated: false,
+            isLoading: false 
+          })
         }
       }
     }),
@@ -248,7 +270,23 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated
-      })
+      }),
+      onRehydrateStorage: () => (state) => {
+        // When state is rehydrated from localStorage, set the token in API client
+        if (state?.tokens?.accessToken && state?.isAuthenticated) {
+          console.log('🔄 Rehydrating auth token from localStorage')
+          apiClient.setAuthToken(state.tokens.accessToken)
+          
+          // Check if token is expired
+          const now = Date.now()
+          if (state.tokens.expiresAt && state.tokens.expiresAt < now) {
+            console.warn('⚠️ Stored token is expired, will refresh on next auth check')
+          }
+        } else {
+          console.log('🚫 No valid token to rehydrate')
+          apiClient.setAuthToken(null)
+        }
+      }
     }
   )
 )

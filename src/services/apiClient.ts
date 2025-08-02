@@ -2,7 +2,7 @@
 
 // Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.example.com'
-const DEFAULT_TIMEOUT = 10000
+const DEFAULT_TIMEOUT = 60000  // 60 seconds for AI processing
 
 // Custom error class for API errors
 export class ApiClientError extends Error {
@@ -23,6 +23,8 @@ interface RequestConfig {
   headers?: Record<string, string>
   body?: any
   timeout?: number
+  retries?: number
+  retryDelay?: number
 }
 
 // API Client class
@@ -43,9 +45,16 @@ class ApiClient {
   setAuthToken(token: string | null) {
     if (token) {
       this.defaultHeaders['Authorization'] = `Bearer ${token}`
+      console.log('🔑 Auth token set in API client')
     } else {
       delete this.defaultHeaders['Authorization']
+      console.log('🚫 Auth token removed from API client')
     }
+  }
+
+  // Get current auth token status
+  hasAuthToken(): boolean {
+    return !!this.defaultHeaders['Authorization']
   }
 
   // Set default headers
@@ -53,8 +62,37 @@ class ApiClient {
     this.defaultHeaders = { ...this.defaultHeaders, ...headers }
   }
 
-  // Protected method to make HTTP requests
+  // Protected method to make HTTP requests with retry logic
   protected async makeRequest<T>(
+    endpoint: string,
+    config: RequestConfig
+  ): Promise<T> {
+    const maxRetries = config.retries || 0
+    const retryDelay = config.retryDelay || 1000
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.executeRequest<T>(endpoint, config)
+      } catch (error) {
+        // Don't retry on client errors (4xx) or if it's the last attempt
+        if (error instanceof ApiClientError && 
+            (error.status >= 400 && error.status < 500) || 
+            attempt === maxRetries) {
+          throw error
+        }
+        
+        // Wait before retrying
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, attempt)))
+        }
+      }
+    }
+    
+    throw new ApiClientError('Max retries exceeded', 0)
+  }
+
+  // Execute the actual HTTP request
+  private async executeRequest<T>(
     endpoint: string,
     config: RequestConfig
   ): Promise<T> {
@@ -73,7 +111,11 @@ class ApiClient {
 
     // Add body for non-GET requests
     if (config.body && config.method !== 'GET') {
-      if (headers['Content-Type'] === 'application/json') {
+      if (config.body instanceof FormData) {
+        // For FormData, don't set Content-Type - let browser set it with boundary
+        delete headers['Content-Type']
+        requestInit.body = config.body
+      } else if (headers['Content-Type'] === 'application/json') {
         requestInit.body = JSON.stringify(config.body)
       } else {
         requestInit.body = config.body
@@ -125,53 +167,74 @@ class ApiClient {
   }
 
   // HTTP method implementations
-  async get<T = any>(endpoint: string, headers?: Record<string, string>): Promise<T> {
+  async get<T = any>(
+    endpoint: string, 
+    headers?: Record<string, string>,
+    options?: { retries?: number; retryDelay?: number }
+  ): Promise<T> {
     return this.makeRequest<T>(endpoint, {
       method: 'GET',
       headers,
+      retries: options?.retries || 2, // Default 2 retries for GET requests
+      retryDelay: options?.retryDelay
     })
   }
 
   async post<T = any>(
     endpoint: string,
     data?: any,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
+    options?: { retries?: number; retryDelay?: number }
   ): Promise<T> {
     return this.makeRequest<T>(endpoint, {
       method: 'POST',
       body: data,
       headers,
+      retries: options?.retries || 1, // Default 1 retry for POST requests
+      retryDelay: options?.retryDelay
     })
   }
 
   async put<T = any>(
     endpoint: string,
     data?: any,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
+    options?: { retries?: number; retryDelay?: number }
   ): Promise<T> {
     return this.makeRequest<T>(endpoint, {
       method: 'PUT',
       body: data,
       headers,
+      retries: options?.retries || 1,
+      retryDelay: options?.retryDelay
     })
   }
 
   async patch<T = any>(
     endpoint: string,
     data?: any,
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
+    options?: { retries?: number; retryDelay?: number }
   ): Promise<T> {
     return this.makeRequest<T>(endpoint, {
       method: 'PATCH',
       body: data,
       headers,
+      retries: options?.retries || 1,
+      retryDelay: options?.retryDelay
     })
   }
 
-  async delete<T = any>(endpoint: string, headers?: Record<string, string>): Promise<T> {
+  async delete<T = any>(
+    endpoint: string, 
+    headers?: Record<string, string>,
+    options?: { retries?: number; retryDelay?: number }
+  ): Promise<T> {
     return this.makeRequest<T>(endpoint, {
       method: 'DELETE',
       headers,
+      retries: options?.retries || 1,
+      retryDelay: options?.retryDelay
     })
   }
 }
@@ -280,6 +343,47 @@ enhancedApiClient.addErrorInterceptor(async (error, config) => {
   if (error.status === 401) {
     // Token might be expired, could trigger refresh here
     console.warn('Authentication error - token may be expired')
+    
+    // Import toast store dynamically to avoid circular dependencies
+    const { useToastStore } = await import('../store/toastStore')
+    useToastStore.getState().addToast({
+      type: 'warning',
+      title: '인증 만료',
+      message: '로그인이 만료되었습니다. 다시 로그인해주세요.',
+      duration: 6000
+    })
+  } else if (error.status === 403) {
+    const { useToastStore } = await import('../store/toastStore')
+    useToastStore.getState().addToast({
+      type: 'error',
+      title: '접근 권한 없음',
+      message: '이 작업을 수행할 권한이 없습니다.',
+      duration: 5000
+    })
+  } else if (error.status === 429) {
+    const { useToastStore } = await import('../store/toastStore')
+    useToastStore.getState().addToast({
+      type: 'warning',
+      title: '요청 한도 초과',
+      message: '너무 많은 요청을 보냈습니다. 잠시 후 다시 시도해주세요.',
+      duration: 6000
+    })
+  } else if (error.status >= 500) {
+    const { useToastStore } = await import('../store/toastStore')
+    useToastStore.getState().addToast({
+      type: 'error',
+      title: '서버 오류',
+      message: '서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+      duration: 7000
+    })
+  } else if (error.status === 0) {
+    const { useToastStore } = await import('../store/toastStore')
+    useToastStore.getState().addToast({
+      type: 'error',
+      title: '네트워크 오류',
+      message: '인터넷 연결을 확인해주세요.',
+      duration: 6000
+    })
   }
 
   // Re-throw the error to maintain error handling flow

@@ -46,3 +46,57 @@ export interface ErrorState {
 export interface AppData {
   [key: string]: any
 }
+
+// Podcast types
+export interface Podcast {
+  podcastId: string
+  userId: string
+  title: string
+  type: 'topic' | 'resume'
+  status: 'processing' | 'completed' | 'failed'
+  duration: number
+  audioUrl: string
+  presignedUrl?: string
+  urlExpiresIn?: number
+  canPlay: boolean
+  canDelete: boolean
+  createdAt: string
+  completedAt?: string
+  createdAtFormatted: string
+  completedAtFormatted?: string
+  estimatedReadingTime: string
+  metadata: {
+    originalContent: string
+    scriptLength: number
+    audioSize: number
+  }
+}
+
+export interface UsageStats {
+  used: number
+  limit: number
+  tier: 'free' | 'premium'
+  remaining: number
+  percentage_used: number
+  tier_limits: {
+    monthly_podcasts: number
+    max_duration_minutes: number
+    max_file_size_mb: number
+    max_text_length: number
+  }
+}
+
+export interface PodcastCreateRequest {
+  type: 'topic' | 'resume'
+  title: string
+  duration: number
+  content?: string
+  file?: File
+}
+
+export interface PodcastSummary {
+  total: number
+  completed: number
+  processing: number
+  failed: number
+}

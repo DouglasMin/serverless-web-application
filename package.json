@@ -16,10 +16,16 @@
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.848.0",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
     "amazon-cognito-identity-js": "^6.3.15",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.23.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
+    "tailwind-merge": "^3.3.1",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
