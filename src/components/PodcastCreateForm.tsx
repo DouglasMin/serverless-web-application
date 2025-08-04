@@ -4,6 +4,7 @@ import podcastService from '../services/podcastService'
 import type { PodcastCreateRequest } from '../types'
 import ErrorDisplay, { FieldError } from './ErrorDisplay'
 import { useToastStore } from '../store/toastStore'
+import PodcastProgressTracker from './PodcastProgressTracker'
 import {
   validateFile,
   validatePodcastForm,
@@ -34,6 +35,11 @@ const PodcastCreateForm = ({ onSuccess, onCancel }: PodcastCreateFormProps) => {
     form?: string | null
   }>({})
   const [lastSubmitTime, setLastSubmitTime] = useState(0)
+  
+  // 비동기 처리 상태
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processingPodcastId, setProcessingPodcastId] = useState<string | null>(null)
+  const [showProgressTracker, setShowProgressTracker] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToastStore()
 
@@ -198,6 +204,8 @@ const PodcastCreateForm = ({ onSuccess, onCancel }: PodcastCreateFormProps) => {
     }
 
     try {
+      setIsProcessing(true)
+      
       const createRequest: PodcastCreateRequest = {
         type: formData.type,
         title: formData.title,
@@ -206,21 +214,36 @@ const PodcastCreateForm = ({ onSuccess, onCancel }: PodcastCreateFormProps) => {
         ...(formData.type === 'resume' && selectedFile && { file: selectedFile })
       }
 
-      await createPodcast(createRequest)
+      const result = await createPodcast(createRequest)
+      
+      // 비동기 처리의 경우 즉시 진행 상황 추적 화면으로 전환
+      if (result && result.podcastId) {
+        setProcessingPodcastId(result.podcastId)
+        setShowProgressTracker(true)
+        
+        toast.addToast({
+          type: 'success',
+          title: '팟캐스트 생성 시작',
+          message: '팟캐스트 생성이 시작되었습니다. 진행 상황을 확인해보세요!',
+          duration: 5000
+        })
+      } else {
+        // 기존 동기 처리 방식 (호환성)
+        // Reset form
+        setFormData({
+          type: 'topic',
+          title: '',
+          duration: 5,
+          content: ''
+        })
+        setSelectedFile(null)
 
-      // Reset form
-      setFormData({
-        type: 'topic',
-        title: '',
-        duration: 5,
-        content: ''
-      })
-      setSelectedFile(null)
-
-      if (onSuccess) {
-        onSuccess()
+        if (onSuccess) {
+          onSuccess()
+        }
       }
     } catch (error) {
+      setIsProcessing(false)
       // Error is handled by the store
       console.error('Failed to create podcast:', error)
     }
@@ -229,6 +252,86 @@ const PodcastCreateForm = ({ onSuccess, onCancel }: PodcastCreateFormProps) => {
   const getFilteredDurationOptions = () => {
     const maxDuration = podcastService.getMaxDuration(usageStats)
     return durationOptions.filter(option => option.value <= maxDuration)
+  }
+
+  const handleProgressComplete = (_podcast: any) => {
+    setIsProcessing(false)
+    setShowProgressTracker(false)
+    setProcessingPodcastId(null)
+    
+    // Reset form
+    setFormData({
+      type: 'topic',
+      title: '',
+      duration: 5,
+      content: ''
+    })
+    setSelectedFile(null)
+    
+    toast.addToast({
+      type: 'success',
+      title: '팟캐스트 완성!',
+      message: '팟캐스트가 성공적으로 생성되었습니다.',
+      duration: 5000
+    })
+    
+    if (onSuccess) {
+      onSuccess()
+    }
+  }
+
+  const handleProgressError = (error: string) => {
+    setIsProcessing(false)
+    
+    toast.addToast({
+      type: 'error',
+      title: '생성 실패',
+      message: error,
+      duration: 8000
+    })
+  }
+
+  const handleRetry = () => {
+    setShowProgressTracker(false)
+    setProcessingPodcastId(null)
+    setIsProcessing(false)
+  }
+
+  // 진행 상황 추적 화면 표시
+  if (showProgressTracker && processingPodcastId) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">팟캐스트 생성 중</h2>
+          <p className="text-gray-600">AI가 당신만의 팟캐스트를 만들고 있습니다.</p>
+        </div>
+        
+        <PodcastProgressTracker
+          podcastId={processingPodcastId}
+          onComplete={handleProgressComplete}
+          onError={handleProgressError}
+          className="mb-6"
+        />
+        
+        <div className="flex justify-between">
+          <button
+            onClick={handleRetry}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            다른 팟캐스트 만들기
+          </button>
+          
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              닫기
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -482,17 +585,17 @@ const PodcastCreateForm = ({ onSuccess, onCancel }: PodcastCreateFormProps) => {
         <div className="flex space-x-4">
           <button
             type="submit"
-            disabled={isCreating || (usageStats?.remaining === 0)}
+            disabled={isCreating || isProcessing || (usageStats?.remaining === 0)}
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-medium transition-colors"
           >
-            {isCreating ? '생성 중...' : '팟캐스트 생성하기'}
+            {isCreating || isProcessing ? '생성 중...' : '팟캐스트 생성하기'}
           </button>
 
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              disabled={isCreating}
+              disabled={isCreating || isProcessing}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               취소

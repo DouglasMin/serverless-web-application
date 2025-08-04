@@ -96,8 +96,8 @@ const PodcastCard = ({ podcast, onDelete, isDeleting }: PodcastCardProps) => {
                 await podcastService.downloadPodcast(podcast)
               } catch (error) {
                 console.error('Download failed:', error)
-                if (podcast.audioUrl) {
-                  window.open(podcast.audioUrl, '_blank')
+                if (podcast.presignedUrl || podcast.audioUrl) {
+                  window.open(podcast.presignedUrl || podcast.audioUrl, '_blank')
                 }
               }
             }}

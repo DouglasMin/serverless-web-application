@@ -99,7 +99,7 @@ const AudioPlayer = ({ podcast, onDownload }: AudioPlayerProps) => {
       try {
         // Direct download using the presigned URL
         const link = document.createElement('a')
-        link.href = podcast.audioUrl
+        link.href = podcast.presignedUrl || podcast.audioUrl
         link.download = `${podcast.title}.mp3`
         link.target = '_blank'
         document.body.appendChild(link)
@@ -118,7 +118,7 @@ const AudioPlayer = ({ podcast, onDownload }: AudioPlayerProps) => {
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
-        src={podcast.audioUrl}
+        src={podcast.presignedUrl || podcast.audioUrl}
         preload="metadata"
       />
 

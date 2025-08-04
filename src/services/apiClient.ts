@@ -242,6 +242,20 @@ class ApiClient {
 // Create and export a singleton instance
 export const apiClient = new ApiClient()
 
+// Setup automatic Authorization header for basic apiClient
+const originalMakeRequest = apiClient['makeRequest'].bind(apiClient)
+apiClient['makeRequest'] = async function<T>(endpoint: string, config: RequestConfig): Promise<T> {
+  // Add Authorization header if token exists
+  const token = localStorage.getItem('accessToken')
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  }
+  return originalMakeRequest(endpoint, config)
+}
+
 // Export the class for testing and custom instances
 export { ApiClient }
 // Request and Response interceptor types
@@ -313,6 +327,15 @@ export const enhancedApiClient = new EnhancedApiClient()
 
 // Setup default interceptors
 enhancedApiClient.addRequestInterceptor((config) => {
+  // Add Authorization header if token exists
+  const token = localStorage.getItem('accessToken')
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  }
+  
   // Add timestamp to requests for debugging
   console.log(`[API Request] ${config.method} ${config.url}`, {
     timestamp: new Date().toISOString(),
