@@ -36,9 +36,12 @@ function App() {
     <ThemeProvider defaultTheme="auto" storageKey="theme" enableSystem={true}>
       <LoadingIndicator />
       <Routes>
+        {/* About page without layout for full screen */}
+        <Route path="about" element={<AboutPage />} />
+        
+        {/* Other pages with layout */}
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
-          <Route path="about" element={<AboutPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="signup" element={<SignUpPage />} />

@@ -26,5 +26,20 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      external: (id) => {
+        // motion-utils의 globalThis-config.mjs 문제 해결
+        if (id.includes('globalThis-config.mjs')) {
+          return false
+        }
+        return false
+      },
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          motion: ['framer-motion']
+        }
+      }
+    }
   },
 })
