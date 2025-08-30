@@ -2,11 +2,11 @@
  * Static data for About Page components
  */
 
-import { 
-  TechCategory, 
-  TeamMember, 
-  VisionStatement, 
-  RoadmapItem, 
+import {
+  TechCategory,
+  TeamMember,
+  VisionStatement,
+  RoadmapItem,
   SecurityFeature,
   FlowNode,
   FlowLink,

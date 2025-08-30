@@ -121,19 +121,23 @@ export const ServiceStorySection: React.FC<Props> = ({
                 )}
 
                 {/* Main Content */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-6 z-10">
-                    {/* Podcast Icon with Animation */}
-                    <FloatingElement delay={0} duration={3} range={10}>
-                      <div className="w-24 h-24 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
-                        <span className="text-3xl">🎧</span>
-                      </div>
-                    </FloatingElement>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="text-center z-10 w-full max-w-sm">
+                    {/* Podcast Icon with Animation - 위쪽에 배치 */}
+                    <div className="mb-6">
+                      <FloatingElement delay={0} duration={3} range={10}>
+                        <div className="w-20 h-20 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                          <span className="text-2xl">🎧</span>
+                        </div>
+                      </FloatingElement>
+                    </div>
 
-                    {/* Audio Visualization */}
-                    <PodcastVisualization isPlaying={isInView} />
+                    {/* Audio Visualization - 정확히 중앙에 배치 */}
+                    <div className="mb-6">
+                      <PodcastVisualization isPlaying={isInView} />
+                    </div>
 
-                    {/* Feature Tags */}
+                    {/* Feature Tags - 아래쪽에 배치 */}
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={isInView ? { opacity: 1, y: 0 } : {}}

@@ -100,26 +100,29 @@ export const PodcastVisualization: React.FC<PodcastVisualizationProps> = ({
   const baseColor = theme.resolvedTheme === 'dark' ? '#6366F1' : '#3B82F6'
 
   return (
-    <div className={`flex items-end justify-center space-x-1 h-24 ${className}`}>
-      {audioLevels.map((level, index) => (
-        <motion.div
-          key={index}
-          className="w-2 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full"
-          animate={{
-            height: isPlaying ? `${level}%` : '20%',
-            opacity: isPlaying ? [0.6, 1, 0.6] : 0.3
-          }}
-          transition={{
-            duration: 0.3,
-            repeat: isPlaying ? Infinity : 0,
-            repeatType: 'reverse',
-            delay: index * 0.05
-          }}
-          style={{
-            background: `linear-gradient(to top, ${baseColor}, #8B5CF6)`
-          }}
-        />
-      ))}
+    <div className={`flex items-center justify-center h-24 ${className}`}>
+      <div className="flex items-end justify-center space-x-1 h-16">
+        {audioLevels.map((level, index) => (
+          <motion.div
+            key={index}
+            className="w-2 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full"
+            animate={{
+              height: isPlaying ? `${Math.max(level * 0.6, 12)}px` : '12px',
+              opacity: isPlaying ? [0.6, 1, 0.6] : 0.3
+            }}
+            transition={{
+              duration: 0.3,
+              repeat: isPlaying ? Infinity : 0,
+              repeatType: 'reverse',
+              delay: index * 0.05
+            }}
+            style={{
+              background: `linear-gradient(to top, ${baseColor}, #8B5CF6)`,
+              minHeight: '12px'
+            }}
+          />
+        ))}
+      </div>
     </div>
   )
 }

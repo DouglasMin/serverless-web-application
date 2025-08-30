@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { ThemeToggle } from '../design/theme'
 import { useScrollHeader } from '../design/animations'
+import podifyLogo from '../assets/podify-logo-removebg-preview.png'
 
 const Header = () => {
   const location = useLocation()
@@ -33,8 +34,15 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="text-xl font-bold text-gray-900 dark:text-white transition-colors">
-              AI Podcast
+            <Link to="/" className="flex items-center space-x-3 transition-all duration-300 hover:opacity-80">
+              <img 
+                src={podifyLogo} 
+                alt="Podify" 
+                className="h-10 w-auto"
+              />
+              <span className="text-xl font-bold text-gray-900 dark:text-white">
+                Podify
+              </span>
             </Link>
           </div>
           
@@ -58,6 +66,16 @@ const Header = () => {
               }`}
             >
               About
+            </Link>
+            <Link
+              to="/pricing"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/pricing') 
+                  ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20' 
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-800'
+              }`}
+            >
+              Pricing
             </Link>
             <Link
               to="/dashboard"

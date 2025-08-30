@@ -15,6 +15,19 @@ const COGNITO_CONFIG = {
   Region: import.meta.env.VITE_AWS_REGION
 }
 
+// Debug: Log configuration
+console.log('🔧 Cognito 설정:', {
+  UserPoolId: COGNITO_CONFIG.UserPoolId,
+  ClientId: COGNITO_CONFIG.ClientId,
+  Region: COGNITO_CONFIG.Region
+})
+
+// Validate configuration
+if (!COGNITO_CONFIG.UserPoolId || !COGNITO_CONFIG.ClientId) {
+  console.error('❌ Cognito 설정이 누락되었습니다:', COGNITO_CONFIG)
+  throw new Error('Cognito configuration is missing. Please check your environment variables.')
+}
+
 // Initialize Cognito User Pool
 const userPool = new CognitoUserPool({
   UserPoolId: COGNITO_CONFIG.UserPoolId,
@@ -38,6 +51,8 @@ class CognitoService {
   // Sign up a new user
   async signUp(userData: CognitoSignUpData): Promise<{ userSub: string; codeDeliveryDetails: any }> {
     return new Promise((resolve, reject) => {
+      console.log('🔧 CognitoService.signUp 호출:', { email: userData.email, name: userData.name })
+      
       const attributeList: CognitoUserAttribute[] = []
 
       // Add email attribute
@@ -68,6 +83,8 @@ class CognitoService {
         )
       }
 
+      console.log('📝 속성 리스트:', attributeList.map(attr => ({ name: attr.getName(), value: attr.getValue() })))
+
       userPool.signUp(
         userData.email,
         userData.password,
@@ -75,14 +92,22 @@ class CognitoService {
         [],
         (err, result) => {
           if (err) {
+            console.error('❌ Cognito signUp 에러:', err)
             reject(err)
             return
           }
           if (result) {
+            console.log('✅ Cognito signUp 성공:', {
+              userSub: result.userSub,
+              codeDeliveryDetails: result.codeDeliveryDetails
+            })
             resolve({
               userSub: result.userSub,
               codeDeliveryDetails: result.codeDeliveryDetails
             })
+          } else {
+            console.error('❌ Cognito signUp 결과 없음')
+            reject(new Error('회원가입 결과를 받지 못했습니다.'))
           }
         }
       )
@@ -92,16 +117,20 @@ class CognitoService {
   // Confirm sign up with verification code
   async confirmSignUp(email: string, confirmationCode: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      console.log('🔧 CognitoService.confirmSignUp 호출:', { email, code: confirmationCode })
+      
       const cognitoUser = new CognitoUser({
         Username: email,
         Pool: userPool
       })
 
-      cognitoUser.confirmRegistration(confirmationCode, true, (err, _result) => {
+      cognitoUser.confirmRegistration(confirmationCode, true, (err, result) => {
         if (err) {
+          console.error('❌ Cognito confirmRegistration 에러:', err)
           reject(err)
           return
         }
+        console.log('✅ Cognito confirmRegistration 성공:', result)
         resolve()
       })
     })

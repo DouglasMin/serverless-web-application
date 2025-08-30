@@ -16,7 +16,7 @@ interface AuthState {
   login: (credentials: LoginCredentials) => Promise<void>
   logout: () => Promise<void>
   refreshToken: () => Promise<void>
-  signUp: (userData: { email: string; password: string; name?: string }) => Promise<void>
+  signUp: (userData: { email: string; password: string; name?: string }) => Promise<{ userSub: string; codeDeliveryDetails: any }>
   confirmSignUp: (email: string, code: string) => Promise<void>
   forgotPassword: (email: string) => Promise<void>
   confirmPassword: (email: string, code: string, newPassword: string) => Promise<void>
@@ -138,12 +138,16 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signUp: async (userData: { email: string; password: string; name?: string }) => {
+        console.log('🏪 AuthStore.signUp 호출:', userData)
         set({ isLoading: true, error: null })
         
         try {
-          await cognitoService.signUp(userData)
+          const result = await cognitoService.signUp(userData)
+          console.log('✅ AuthStore.signUp 성공:', result)
           set({ isLoading: false })
+          return result
         } catch (error: any) {
+          console.error('❌ AuthStore.signUp 실패:', error)
           const errorMessage = error.message || 'Sign up failed'
           set({
             isLoading: false,
@@ -154,12 +158,15 @@ export const useAuthStore = create<AuthState>()(
       },
 
       confirmSignUp: async (email: string, code: string) => {
+        console.log('🏪 AuthStore.confirmSignUp 호출:', { email, code })
         set({ isLoading: true, error: null })
         
         try {
           await cognitoService.confirmSignUp(email, code)
+          console.log('✅ AuthStore.confirmSignUp 성공')
           set({ isLoading: false })
         } catch (error: any) {
+          console.error('❌ AuthStore.confirmSignUp 실패:', error)
           const errorMessage = error.message || 'Confirmation failed'
           set({
             isLoading: false,

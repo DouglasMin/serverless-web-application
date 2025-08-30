@@ -14,16 +14,18 @@ const HomePage = () => {
           <div className="text-center">
             <ScrollAnimation delay={0}>
               <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-8 leading-tight">
-                AI로 만드는
-                <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  나만의 팟캐스트
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Podify
+                </span>
+                <span className="block text-4xl md:text-5xl mt-2">
+                  AI로 만드는 나만의 팟캐스트
                 </span>
               </h1>
             </ScrollAnimation>
             
             <ScrollAnimation delay={200}>
               <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-                주제나 이력서를 입력하면 AI가 자동으로 스크립트를 생성하고, 
+                Podify와 함께 주제나 이력서를 입력하면 AI가 자동으로 스크립트를 생성하고, 
                 고품질 음성으로 변환해 전문적인 팟캐스트를 만들어드립니다.
               </p>
             </ScrollAnimation>

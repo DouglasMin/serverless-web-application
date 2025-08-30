@@ -1,15 +1,38 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 
 const SignUpPage = () => {
+  // Check localStorage for pending confirmation state
+  const getPendingConfirmation = () => {
+    try {
+      const pending = localStorage.getItem('pendingSignUpConfirmation')
+      if (!pending) return null
+      
+      const data = JSON.parse(pending)
+      // Check if data is older than 1 hour (3600000 ms)
+      const oneHour = 60 * 60 * 1000
+      if (Date.now() - data.timestamp > oneHour) {
+        localStorage.removeItem('pendingSignUpConfirmation')
+        return null
+      }
+      
+      return data
+    } catch {
+      localStorage.removeItem('pendingSignUpConfirmation')
+      return null
+    }
+  }
+
+  const pendingConfirmation = getPendingConfirmation()
+  
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: pendingConfirmation?.name || '',
+    email: pendingConfirmation?.email || '',
     password: '',
     confirmPassword: ''
   })
-  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(!!pendingConfirmation)
   const [confirmationCode, setConfirmationCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -17,6 +40,11 @@ const SignUpPage = () => {
   const navigate = useNavigate()
   
   const { signUp, confirmSignUp, isLoading, error, clearError } = useAuthStore()
+
+  // Clean up expired localStorage data on component mount
+  useEffect(() => {
+    getPendingConfirmation() // This will automatically clean up expired data
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -66,14 +94,28 @@ const SignUpPage = () => {
     }
 
     try {
+      // Store confirmation state in localStorage BEFORE the API call
+      // This ensures the state is available immediately
+      localStorage.setItem('pendingSignUpConfirmation', JSON.stringify({
+        email: formData.email,
+        name: formData.name,
+        timestamp: Date.now()
+      }))
+      
       await signUp({
         email: formData.email,
         password: formData.password,
         name: formData.name
       })
+      
+      // Immediately show confirmation screen
       setShowConfirmation(true)
+      
+      console.log('✅ 회원가입 성공 - 인증 코드 입력 화면으로 전환')
     } catch (error) {
       console.error('Sign up failed:', error)
+      // Remove localStorage data if signup failed
+      localStorage.removeItem('pendingSignUpConfirmation')
     }
   }
 
@@ -83,6 +125,10 @@ const SignUpPage = () => {
 
     try {
       await confirmSignUp(formData.email, confirmationCode)
+      
+      // Clear pending confirmation state on successful confirmation
+      localStorage.removeItem('pendingSignUpConfirmation')
+      
       navigate('/login', { 
         state: { message: '회원가입이 완료되었습니다! 로그인해주세요.' }
       })
@@ -99,7 +145,7 @@ const SignUpPage = () => {
           <div className="text-center mb-8">
             <Link to="/" className="inline-block">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                AI Podcast
+                Podify
               </h1>
             </Link>
           </div>
@@ -171,7 +217,18 @@ const SignUpPage = () => {
             
             <div className="mt-6 text-center">
               <button
-                onClick={() => setShowConfirmation(false)}
+                onClick={() => {
+                  // Clear pending confirmation state when going back to signup
+                  localStorage.removeItem('pendingSignUpConfirmation')
+                  setShowConfirmation(false)
+                  setFormData({
+                    name: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: ''
+                  })
+                  setConfirmationCode('')
+                }}
                 className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors hover:underline"
               >
                 다시 회원가입하기
@@ -205,7 +262,7 @@ const SignUpPage = () => {
               계정 만들기
             </h2>
             <p className="text-gray-600 dark:text-gray-300">
-              AI 팟캐스트와 함께 새로운 여정을 시작하세요
+              Podify와 함께 새로운 여정을 시작하세요
             </p>
           </div>
           

@@ -30,7 +30,7 @@ const LoginPage = () => {
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              AI Podcast
+              Podify
             </h1>
           </Link>
         </div>
@@ -42,7 +42,7 @@ const LoginPage = () => {
               다시 오신 것을 환영합니다
             </h2>
             <p className="text-gray-600 dark:text-gray-300">
-              계정에 로그인하여 AI 팟캐스트를 만들어보세요
+              계정에 로그인하여 Podify로 팟캐스트를 만들어보세요
             </p>
           </div>
           
